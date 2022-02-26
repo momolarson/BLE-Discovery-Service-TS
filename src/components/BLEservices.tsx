@@ -1,7 +1,5 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
 import {
   SafeAreaView,
   View,
@@ -10,26 +8,29 @@ import {
   Text,
   TouchableHighlight,
 } from 'react-native';
-import {selectedService, getServiceCharacteristics} from '../actions';
+import {selectedService} from '../actions';
 import DataActivityIndicator from './DataActivityIndicator';
+import {RootState} from '../store';
 
-function Item({service}) {
+function Item(service: any) {
+  //console.log('Item:', service.uuid);
   return (
     <View style={styles.item}>
-      <Text style={styles.title}>{service.uuid}</Text>
-      <Text style={styles.subtextss}>
-        Primary: {service.isPrimary.toString()}
+      <Text style={styles.title}>{service.service.uuid}</Text>
+      <Text style={styles.subtext}>
+        Primary: {service.service.isPrimary.toString()}
       </Text>
     </View>
   );
 }
 
-function handleClick(BLEServices, serviceId) {
+function handleClick(BLEServices: any, serviceId: string) {
   BLEServices.selectedService(serviceId);
   BLEServices.navigation.navigate('BLECharacteristics');
 }
 
-function BLEservices(BLEServices) {
+function BLEservices(BLEServices: any) {
+  //console.log('BLEservice:', BLEServices);
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
@@ -37,8 +38,8 @@ function BLEservices(BLEServices) {
         renderItem={({item}) => (
           <TouchableHighlight
             onPress={() => handleClick(BLEServices, item)}
-            style={styles.rowFront}
-            underlayColor={'#AAA'}>
+            style={styles.item}
+            underlayColor={'#CCC'}>
             <Item service={item} />
           </TouchableHighlight>
         )}
@@ -51,13 +52,14 @@ function BLEservices(BLEServices) {
 //}
 
 function mapStateToProps(state) {
+  //console.log('state:', state.BLEs.connectedDeviceServices);
   return {
     connectedDeviceServices: state.BLEs.connectedDeviceServices,
   };
 }
 
-const mapDispatchToProps = dispatch => ({
-  selectedService: service => dispatch(selectedService(service)),
+const mapDispatchToProps = (dispatch: Function) => ({
+  selectedService: (service: any) => dispatch(selectedService(service)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps, null, {
@@ -77,8 +79,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
+    color: '#000',
   },
   subtext: {
     fontSize: 10,
+  },
+  rowFront: {
+    alignItems: 'center',
+    backgroundColor: '#CCC',
+    borderBottomColor: 'black',
+    borderBottomWidth: 1,
+    justifyContent: 'center',
+    height: 50,
   },
 });

@@ -2,11 +2,10 @@ import React from 'react';
 import {Text, FlatList, TouchableHighlight, View} from 'react-native';
 import {Container, HStack} from 'native-base';
 import BLE from './BLE';
-import {connect, ConnectedProps} from 'react-redux'; //, ConnectedProps
+import {connect} from 'react-redux'; //, ConnectedProps
 import {connectDevice, startScan} from '../actions';
-import {RootState} from '../reducers/BLEReducer';
+import {RootState} from '../reducers/store';
 import DataActivityIndicator from './DataActivityIndicator';
-import {NavigationScreenProp} from 'react-navigation';
 import {BLEstyles} from '../styles';
 
 // interface NavigationProps {
@@ -26,27 +25,26 @@ import {BLEstyles} from '../styles';
 // const connector = connect(mapState, mapDispatch);
 // type PropsFromRedux = ConnectedProps<typeof connector>;
 
-// interface Props extends PropsFromRedux {
-//   BLEs: {
-//     BLEList: any[];
-//   };
+// interface Props {
+//   BLEList: any[];
+//   navigation: any;
 // }
 
 class BLEList extends React.Component {
-  constructor(props) {
+  constructor(props: any) {
     super(props);
-    console.log('constructor: ');
-    console.log(props);
+    //console.log('constructor: ');
+    //console.log(props);
     props.startScan();
   }
 
-  handleClick = device => {
+  handleClick = (device) => {
     console.log('BLE List: handleClick');
     this.props.connectDevice(device);
     this.props.navigation.navigate('BLEServices');
   };
 
-  connectableString = item => {
+  connectableString = (item: any) => {
     if (item.isConnectable) {
       return 'Tap to connect to: ' + item.name;
     } else {
@@ -56,7 +54,7 @@ class BLEList extends React.Component {
 
   render() {
     let dataArray = [];
-    console.log('render props: ', this.props);
+    //console.log('render props: ', this.props);
     if (this.props.BLEList !== undefined) {
       dataArray = this.props.BLEList;
     }
@@ -90,8 +88,7 @@ class BLEList extends React.Component {
   }
 }
 
-function mapStateToProps(state: any) {
-  console.log('state', state);
+function mapStateToProps(state: RootState) {
   return {
     BLEList: state.BLEs.BLEList,
   };

@@ -1,68 +1,33 @@
 import Base64 from '../Base64';
 import {PermissionsAndroid, Platform} from 'react-native';
-import {Action} from 'redux';
-import {PayloadAction} from '@reduxjs/toolkit';
+import {createAction, AnyAction} from '@reduxjs/toolkit';
 import {ThunkAction} from 'redux-thunk';
+import {RootState, DeviceManager} from '../store';
 
-/* type addBLEAction = Action<'addBLE'>;
-type connectedDeviceAction = Action<'connectedDevice'>;
-type connectedServiceCharacteristicsAction = Action<'connectedServiceCharacteristics'>;
-type connectedDeviceServicesAction = Action<'connectedDeviceServices'>;
-type selectedServiceAction = Action<'selectedService'>;
-type selectedCharacteristicAction = Action<'selectedCharacteristic'>;
-type changeStatusAction = Action<'changeStatus'>; */
-
-// type Actions =
-//   | addBLE
-//   | connectedDevice
-//   | connectedServiceCharacteristics
-//   | connectedDeviceServices
-//   | selectedService
-//   | selectedCharacteristic
-//   | changeStatus;
-
-export const addBLE = (device: any) => ({
-  type: 'ADD_BLE',
-  device,
-});
-
-export const connectedDevice = (device: any) => ({
-  type: 'CONNECTED_DEVICE',
-  connectedDevice: device,
-});
-
-export const connectedServiceCharacteristics = (characteristic: any) => ({
-  type: 'CONNECTED_CHARACTERISTICS',
-  connectedServiceCharacteristics: characteristic,
-});
-
-export const connectedDeviceServices = (services: any) => ({
-  type: 'CONNECTED_SERVICES',
-  connectedDeviceServices: services,
-});
-
-export const selectedService = (serviceID: any) => ({
-  type: 'SELECTED_SERVICE',
-  selectedService: serviceID,
-});
-
-export const selectedCharacteristic = (characteristic: any) => ({
-  type: 'SELECTED_CHARACTERISTIC',
-  selectedCharacteristic: characteristic,
-});
-
-export const changeStatus = (status: string) => ({
-  type: 'CHANGE_STATUS',
-  status: status,
-});
+export const addBLE = createAction<any>('ADD_BLE');
+export const connectedDevice = createAction<any>('CONNECTED_DEVICE');
+export const connectedServiceCharacteristics = createAction<any>(
+  'CONNECTED_CHARACTERISTICS',
+);
+export const connectedDeviceServices = createAction<any>('CONNECTED_SERVICES');
+export const selectedService = createAction<any>('SELECTED_SERVICE');
+export const selectedCharacteristic = createAction<any>(
+  'SELECTED_CHARACTERISTIC',
+);
+export const changeStatus = createAction<string>('CHANGE_STATUS');
 
 //some thunks to control the BLE Device
 
-export const startScan = () => {
-  return (dispatch, getState, DeviceManager) => {
+export const startScan = (): ThunkAction<
+  void,
+  RootState,
+  DeviceManager,
+  AnyAction
+> => {
+  return (dispatch, getState, DeviceMgr) => {
     // you can use Device Manager here
     console.log('start Scanning');
-    const subscription = DeviceManager.onStateChange(state => {
+    const subscription = DeviceMgr.onStateChange((state: string) => {
       if (state === 'PoweredOn') {
         console.log('powered on');
         dispatch(scan());
@@ -98,20 +63,25 @@ const requestLocationPermission = async () => {
   }
 };
 
-export const scan = () => {
+export const scan = (): ThunkAction<
+  void,
+  RootState,
+  DeviceManager,
+  AnyAction
+> => {
   console.log('scanning...');
-  return async (dispatch, getState, DeviceManager) => {
+  return async (dispatch, getState, DeviceMgr) => {
     const permission =
       Platform.OS === 'ios' ? true : await requestLocationPermission();
     if (permission) {
-      DeviceManager.startDeviceScan(null, null, (error, device) => {
+      DeviceMgr.startDeviceScan(null, null, (error: string, device: any) => {
         //console.log('Scanning for Devices');
         dispatch(changeStatus('Scanning'));
         if (error) {
           console.log(error);
         }
         if (device !== null) {
-          // console.log('Adding Devices');
+          //console.log('Adding Devices:', device);
           dispatch(addBLE(device));
         }
       });
@@ -122,69 +92,59 @@ export const scan = () => {
   };
 };
 
-export const getServiceCharacteristics = service => {
-  return (dispatch, getState, DeviceManager) => {
+export const getServiceCharacteristics = (
+  service: any,
+): ThunkAction<void, RootState, DeviceManager, AnyAction> => {
+  return (dispatch, getState, DeviceMgr) => {
     let state = getState();
-    DeviceManager.characteristicsForDevice(
+    // console.log('getServiceCharacteristics', state.BLEs.connectedDevice);
+    DeviceMgr.characteristicsForDevice(
       state.BLEs.connectedDevice.id,
       service.uuid,
-    ).then(characteristics => {
+    ).then((characteristics: any) => {
       dispatch(connectedServiceCharacteristics(characteristics));
     });
   };
 };
 
-export const connectDevice = device => {
-  return (dispatch, getState, DeviceManager) => {
+export const connectDevice = (
+  device: any,
+): ThunkAction<void, RootState, DeviceManager, AnyAction> => {
+  return (dispatch, getState, DeviceMgr) => {
+    console.log('connectDevice');
     dispatch(changeStatus('Connecting'));
-    DeviceManager.stopDeviceScan();
+    DeviceMgr.stopDeviceScan();
     device
       .connect()
-      .then(device => {
+      .then((currentlyconnectedDevice: any) => {
         dispatch(changeStatus('Discovering'));
-        let allCharacteristics = device.discoverAllServicesAndCharacteristics();
-        dispatch(connectedDevice(device));
+        let allCharacteristics =
+          currentlyconnectedDevice.discoverAllServicesAndCharacteristics();
+        dispatch(connectedDevice(currentlyconnectedDevice));
         return allCharacteristics;
       })
-      .then(device => {
-        let services = device.services(device.id);
+      .then((currentservicesDevice: any) => {
+        dispatch(changeStatus('Getting Services'));
+        let services = currentservicesDevice.services(currentservicesDevice.id);
         return services;
       })
       .then(
-        services => {
-          console.log('found services: ', services);
-          dispatch(connectedDeviceServices(services));
+        (currentfoundServices: any) => {
+          dispatch(changeStatus('Found Services'));
+          //console.log('found services: ', currentfoundServices);
+          dispatch(connectedDeviceServices(currentfoundServices));
         },
-        error => {
+        (error: string) => {
           console.log(this._logError('SCAN', error));
         },
       );
   };
 };
 
-const crcVal = array => {
-  let currentVal;
-  let output = array.reduce(function (currentVal, index) {
-    currentVal = currentVal + index;
-    if (currentVal > 256) {
-      currentVal = currentVal - 256;
-    }
-    return currentVal;
-  });
-  return 255 - output;
-};
-
-function str2ab(str) {
-  console.log('string to send: ', str);
-  var bufView = new Uint8Array(str.length);
-  for (var i = 0, strLen = str.length; i < strLen; i++) {
-    bufView[i] = str.charCodeAt(i);
-  }
-  return bufView;
-}
-
-export const writeCharacteristic = text => {
-  return (dispatch, getState, DeviceManager) => {
+export const writeCharacteristic = (
+  text: string,
+): ThunkAction<void, RootState, DeviceManager, AnyAction> => {
+  return (dispatch, getState, DeviceMgr) => {
     const state = getState();
     let buffer = str2ab(text);
     let packetsize = 20;
@@ -199,12 +159,32 @@ export const writeCharacteristic = text => {
       let packet = buffer.slice(offset, packetlength);
       console.log('packet: ', packet);
       let base64packet = Base64.btoa(String.fromCharCode.apply(null, packet));
-      state.BLEs.connectedDevice.writeCharacteristicWithoutResponseForService(
-        state.BLEs.selectedService.uuid,
-        state.BLEs.selectedCharacteristic.uuid,
+      state.connectedDevice.writeCharacteristicWithoutResponseForService(
+        state.selectedService.uuid,
+        state.selectedCharacteristic.uuid,
         base64packet,
       );
       offset += packetsize;
     } while (offset < buffer.length);
   };
 };
+
+const crcVal = (array: []) => {
+  let output = array.reduce(function (currentVal, index) {
+    let cVal = <number>currentVal + <number>index;
+    if (cVal > 256) {
+      cVal = <number>currentVal - 256;
+    }
+    return <never>cVal;
+  });
+  return 255 - <number>output;
+};
+
+function str2ab(str: string) {
+  console.log('string to send: ', str);
+  var bufView = new Uint8Array(str.length);
+  for (var i = 0, strLen = str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return bufView;
+}

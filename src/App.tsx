@@ -9,35 +9,17 @@
  */
 
 import React from 'react';
-
 import {Provider} from 'react-redux';
-import {createStore, applyMiddleware} from 'redux';
-import rootReducer from './reducers/index';
-import thunk from 'redux-thunk';
-import {composeWithDevTools} from 'redux-devtools-extension';
-
 import BLEList from './components/BLElist';
 import BLEservices from './components/BLEservices';
-import BLECharacteristic from './components/BLEcharacteristics';
+import BLEcharacteristic from './components/BLEcharacteristics';
 import BLEservicecharacteristics from './components/BLEservicecharacteristics';
-import {BleManager} from 'react-native-ble-plx';
-
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {NativeBaseProvider} from 'native-base';
-
-const DeviceManager = new BleManager();
+import {store} from './reducers/store';
 
 const Stack = createStackNavigator();
-
-const composeEnhancers = composeWithDevTools({
-  // Specify here name, actionsBlacklist, actionsCreators and other options
-});
-
-const store = createStore(
-  rootReducer,
-  composeEnhancers(applyMiddleware(thunk.withExtraArgument(DeviceManager))),
-);
 
 const App = () => {
   return (
@@ -53,7 +35,7 @@ const App = () => {
             />
             <Stack.Screen
               name="BLECharacteristic"
-              component={BLECharacteristic}
+              component={BLEcharacteristic}
             />
           </Stack.Navigator>
         </NavigationContainer>

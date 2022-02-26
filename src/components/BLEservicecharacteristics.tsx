@@ -11,43 +11,43 @@ import {
 } from 'react-native';
 import {selectedCharacteristic, getServiceCharacteristics} from '../actions';
 import DataActivityIndicator from './DataActivityIndicator';
+import {RootState} from '../reducers/store';
 
-function Item({characteristic}) {
+function Item(characteristic: any) {
   return (
     <View style={styles.item}>
-      <Text style={styles.title}>{characteristic.uuid}</Text>
+      <Text style={styles.title}>{characteristic.characteristic.uuid}</Text>
       <Text style={styles.subtext}>
-        Notifiable: {characteristic.isNotifiable.toString()}
+        Notifiable: {characteristic.characteristic.isNotifiable.toString()}
       </Text>
       <Text style={styles.subtext}>
-        Notifying: {characteristic.isNotifying.toString()}
+        Notifying: {characteristic.characteristic.isNotifying.toString()}
       </Text>
       <Text style={styles.subtext}>
-        Readable: {characteristic.isReadable.toString()}
+        Readable: {characteristic.characteristic.isReadable.toString()}
       </Text>
       <Text style={styles.subtext}>
-        Indicatable: {characteristic.isIndicatable.toString()}
+        Indicatable: {characteristic.characteristic.isIndicatable.toString()}
       </Text>
       <Text style={styles.subtext}>
         Writeable with Response:{' '}
-        {characteristic.isWritableWithResponse.toString()}
+        {characteristic.characteristic.isWritableWithResponse.toString()}
       </Text>
       <Text style={styles.subtext}>
         Writeable without Response:{' '}
-        {characteristic.isWritableWithoutResponse.toString()}
+        {characteristic.characteristic.isWritableWithoutResponse.toString()}
       </Text>
     </View>
   );
 }
 
-function handleClick(BLECharacteristic, characteristic) {
-  console.log('handleclick:', BLECharacteristic);
+function handleClick(BLECharacteristic: any, characteristic: any) {
+  //console.log('handleclick:', BLECharacteristic);
   BLECharacteristic.selectCharacteristic(characteristic);
   BLECharacteristic.navigation.navigate('BLECharacteristic');
 }
 
-function BLEservicecharacteristics(BLECharacteristics) {
-  console.log('function:', BLECharacteristics);
+function BLEservicecharacteristics(BLECharacteristics: any) {
   BLECharacteristics.getServiceCharacteristics(BLECharacteristics.BLEService);
   return (
     <SafeAreaView style={styles.container}>
@@ -56,7 +56,7 @@ function BLEservicecharacteristics(BLECharacteristics) {
         renderItem={({item}) => (
           <TouchableHighlight
             onPress={() => handleClick(BLECharacteristics, item)}
-            style={styles.rowFront}
+            style={styles.item}
             underlayColor={'#AAA'}>
             <Item characteristic={item} />
           </TouchableHighlight>
@@ -76,10 +76,10 @@ function mapStateToProps(state) {
   };
 }
 
-const mapDispatchToProps = dispatch => ({
-  selectCharacteristic: characteristic =>
+const mapDispatchToProps = (dispatch: Function) => ({
+  selectCharacteristic: (characteristic: any) =>
     dispatch(selectedCharacteristic(characteristic)),
-  getServiceCharacteristics: service =>
+  getServiceCharacteristics: (service: any) =>
     dispatch(getServiceCharacteristics(service)),
 });
 
@@ -103,5 +103,13 @@ const styles = StyleSheet.create({
   },
   subtext: {
     fontSize: 10,
+  },
+  rowFront: {
+    alignItems: 'center',
+    backgroundColor: '#CCC',
+    borderBottomColor: 'black',
+    borderBottomWidth: 1,
+    justifyContent: 'center',
+    height: 50,
   },
 });
