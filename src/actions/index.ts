@@ -2,7 +2,8 @@ import Base64 from '../Base64';
 import {PermissionsAndroid, Platform} from 'react-native';
 import {createAction, AnyAction} from '@reduxjs/toolkit';
 import {ThunkAction} from 'redux-thunk';
-import {RootState, DeviceManager} from '../store';
+import {DeviceManager} from '../store';
+import {RootState} from '../reducers/store';
 
 export const addBLE = createAction<any>('ADD_BLE');
 export const connectedDevice = createAction<any>('CONNECTED_DEVICE');
@@ -102,6 +103,7 @@ export const getServiceCharacteristics = (
       state.BLEs.connectedDevice.id,
       service.uuid,
     ).then((characteristics: any) => {
+      //  console.log('getServiceCharacteristics', characteristics);
       dispatch(connectedServiceCharacteristics(characteristics));
     });
   };
@@ -116,26 +118,25 @@ export const connectDevice = (
     DeviceMgr.stopDeviceScan();
     device
       .connect()
-      .then((currentlyconnectedDevice: any) => {
+      .then(() => {
         dispatch(changeStatus('Discovering'));
-        let allCharacteristics =
-          currentlyconnectedDevice.discoverAllServicesAndCharacteristics();
-        dispatch(connectedDevice(currentlyconnectedDevice));
+        let allCharacteristics = device.discoverAllServicesAndCharacteristics();
+        dispatch(connectedDevice(device));
         return allCharacteristics;
       })
-      .then((currentservicesDevice: any) => {
+      .then(() => {
         dispatch(changeStatus('Getting Services'));
-        let services = currentservicesDevice.services(currentservicesDevice.id);
+        let services = device.services(device.id);
         return services;
       })
       .then(
-        (currentfoundServices: any) => {
+        (services: any) => {
           dispatch(changeStatus('Found Services'));
-          //console.log('found services: ', currentfoundServices);
-          dispatch(connectedDeviceServices(currentfoundServices));
+          dispatch(connectedDeviceServices(services));
         },
         (error: string) => {
-          console.log(this._logError('SCAN', error));
+          dispatch(changeStatus('Error Connecting'));
+          console.log('Error Connecting Device', error);
         },
       );
   };
@@ -144,12 +145,13 @@ export const connectDevice = (
 export const writeCharacteristic = (
   text: string,
 ): ThunkAction<void, RootState, DeviceManager, AnyAction> => {
-  return (dispatch, getState, DeviceMgr) => {
+  return (dispatch, getState) => {
     const state = getState();
     let buffer = str2ab(text);
     let packetsize = 20;
     let offset = 0;
     let packetlength = packetsize;
+    console.log('writeCharacteristic');
     do {
       if (offset + packetsize > buffer.length) {
         packetlength = buffer.length;
@@ -159,9 +161,9 @@ export const writeCharacteristic = (
       let packet = buffer.slice(offset, packetlength);
       console.log('packet: ', packet);
       let base64packet = Base64.btoa(String.fromCharCode.apply(null, packet));
-      state.connectedDevice.writeCharacteristicWithoutResponseForService(
-        state.selectedService.uuid,
-        state.selectedCharacteristic.uuid,
+      state.BLEs.connectedDevice.writeCharacteristicWithoutResponseForService(
+        state.BLEs.selectedService.uuid,
+        state.BLEs.selectedCharacteristic.uuid,
         base64packet,
       );
       offset += packetsize;
@@ -169,16 +171,16 @@ export const writeCharacteristic = (
   };
 };
 
-const crcVal = (array: []) => {
-  let output = array.reduce(function (currentVal, index) {
-    let cVal = <number>currentVal + <number>index;
-    if (cVal > 256) {
-      cVal = <number>currentVal - 256;
-    }
-    return <never>cVal;
-  });
-  return 255 - <number>output;
-};
+// const crcVal = (array: []) => {
+//   let output = array.reduce(function (currentVal, index) {
+//     let cVal = <number>currentVal + <number>index;
+//     if (cVal > 256) {
+//       cVal = <number>currentVal - 256;
+//     }
+//     return <never>cVal;
+//   });
+//   return 255 - <number>output;
+// };
 
 function str2ab(str: string) {
   console.log('string to send: ', str);

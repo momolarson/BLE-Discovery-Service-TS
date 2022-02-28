@@ -3,6 +3,7 @@ import {connect} from 'react-redux';
 import {View, StyleSheet, Text, TextInput, Button} from 'react-native';
 import {writeCharacteristic} from '../actions';
 import {RootState} from '../reducers/store';
+import {HStack} from 'native-base';
 
 function Item(characteristic: any) {
   return (
@@ -41,6 +42,9 @@ function BLEWritecharacteristic(ReduxStore: any) {
 
   return (
     <>
+      <HStack>
+        <Text>Write Characteristic</Text>
+      </HStack>
       <Text>{ReduxStore.selectedCharacteristic.uuid}</Text>
       <Item characteristic={ReduxStore.selectedCharacteristic} />
       <TextInput

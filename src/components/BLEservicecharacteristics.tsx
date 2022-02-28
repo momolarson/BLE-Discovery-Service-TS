@@ -1,6 +1,6 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {connect} from 'react-redux';
-
+import {HStack} from 'native-base';
 import {
   SafeAreaView,
   View,
@@ -12,6 +12,7 @@ import {
 import {selectedCharacteristic, getServiceCharacteristics} from '../actions';
 import DataActivityIndicator from './DataActivityIndicator';
 import {RootState} from '../reducers/store';
+import BLE from './BLE';
 
 function Item(characteristic: any) {
   return (
@@ -42,13 +43,16 @@ function Item(characteristic: any) {
 }
 
 function handleClick(BLECharacteristic: any, characteristic: any) {
-  //console.log('handleclick:', BLECharacteristic);
   BLECharacteristic.selectCharacteristic(characteristic);
   BLECharacteristic.navigation.navigate('BLECharacteristic');
 }
 
 function BLEservicecharacteristics(BLECharacteristics: any) {
-  BLECharacteristics.getServiceCharacteristics(BLECharacteristics.BLEService);
+  useEffect(() => {
+    console.log('useEffect:' + BLECharacteristics.BLEService.id);
+    BLECharacteristics.getServiceCharacteristics(BLECharacteristics.BLEService);
+  }, [BLECharacteristics.BLEService.id]);
+
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
@@ -64,12 +68,15 @@ function BLEservicecharacteristics(BLECharacteristics: any) {
         keyExtractor={item => item.id.toString()}
         ListEmptyComponent={DataActivityIndicator}
       />
+      <HStack>
+        <BLE />
+      </HStack>
     </SafeAreaView>
   );
 }
 //}
 
-function mapStateToProps(state) {
+function mapStateToProps(state: RootState) {
   return {
     BLEService: state.BLEs.selectedService,
     BLEServiceCharacteristics: state.BLEs.connectedServiceCharacteristics,

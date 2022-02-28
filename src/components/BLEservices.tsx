@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import {selectedService} from '../actions';
 import DataActivityIndicator from './DataActivityIndicator';
-import {RootState} from '../store';
+import {RootState} from '../reducers/store';
+import BLE from './BLE';
+import {HStack} from 'native-base';
 
 function Item(service: any) {
   //console.log('Item:', service.uuid);
@@ -46,13 +48,15 @@ function BLEservices(BLEServices: any) {
         keyExtractor={item => item.id.toString()}
         ListEmptyComponent={DataActivityIndicator}
       />
+      <HStack>
+        <BLE />
+      </HStack>
     </SafeAreaView>
   );
 }
 //}
 
-function mapStateToProps(state) {
-  //console.log('state:', state.BLEs.connectedDeviceServices);
+function mapStateToProps(state: RootState) {
   return {
     connectedDeviceServices: state.BLEs.connectedDeviceServices,
   };

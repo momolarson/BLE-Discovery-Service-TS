@@ -39,7 +39,6 @@ class BLEList extends React.Component {
   }
 
   handleClick = (device) => {
-    console.log('BLE List: handleClick');
     this.props.connectDevice(device);
     this.props.navigation.navigate('BLEServices');
   };
